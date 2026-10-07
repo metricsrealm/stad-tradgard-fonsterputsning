@@ -74,7 +74,7 @@ const submitLeadToCRM = async (payload: FormValues) => {
     name: payload.name || "",
     phone: payload.phone || "",
     email: payload.email || "",
-    square_meter: 0,
+    square_meter: 70,
     city: payload.city || "",
     address: payload.address || payload.city || "",
     move_date: "",

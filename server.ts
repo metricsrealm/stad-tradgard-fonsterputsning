@@ -23,9 +23,10 @@ async function startServer() {
 
       const body = req.body || {};
 
-      const sqmNum = typeof body.square_meter === "number"
+      const parsedSqm = typeof body.square_meter === "number"
         ? body.square_meter
         : (parseInt(body.square_meter || body.squareMeter) || 0);
+      const sqmNum = parsedSqm > 0 ? parsedSqm : 70;
 
       let priceNum = 0;
       if (typeof body.suggested_price === "number") {
@@ -141,9 +142,10 @@ async function startServer() {
       const clientUserAgent = body.user_agent || incomingUa || userAgent;
       const fullComment = body.comment || body.message || "";
 
-      const sqmNum = typeof body.square_meter === "number"
+      const parsedSqm = typeof body.square_meter === "number"
         ? body.square_meter
         : (parseInt(body.square_meter || body.squareMeter) || 0);
+      const sqmNum = parsedSqm > 0 ? parsedSqm : 70;
 
       const updatePayload: Record<string, any> = {
         action: body.action || 4,
