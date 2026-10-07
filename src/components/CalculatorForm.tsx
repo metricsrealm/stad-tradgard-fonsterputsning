@@ -147,6 +147,8 @@ const SERVICES = {
 };
 
 const LADDER_PRICE = 200;
+const SPROJS_PRICE = 0; // Befintlig implementering: 0 kr (inräknat)
+const INGLASAD_PRICE = 0; // Befintlig implementering: 0 kr (inräknat)
 const MIN_PRICE = 700;
 const MIN_RUT_PRICE = 350;
 
@@ -193,19 +195,9 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
   const [customerId, setCustomerId] = useState<string | number | null>(null);
   const [hasFiredPartial, setHasFiredPartial] = useState<boolean>(false);
 
-  // Loading Animation Modal State & Benefits Cycle
+  // In-form calculation loading state (between Step 3 and Step 4)
+  const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [loadingPhase, setLoadingPhase] = useState<number>(0);
-
-  useEffect(() => {
-    if (!isSubmitting) {
-      setLoadingPhase(0);
-      return;
-    }
-    const timer = setInterval(() => {
-      setLoadingPhase((prev) => (prev + 1) % 3);
-    }, 850);
-    return () => clearInterval(timer);
-  }, [isSubmitting]);
 
   const loadingSteps = [
     {
@@ -248,6 +240,8 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
   const calculatePrice = () => {
     let sub = (counts.w2 * SERVICES.w2.price) + (counts.w4 * SERVICES.w4.price) + (counts.door * SERVICES.door.price);
     if (ladder) sub += LADDER_PRICE;
+    if (sprojs) sub += SPROJS_PRICE;
+    if (inglasad) sub += INGLASAD_PRICE;
     const finalPrice = rut ? Math.max(Math.round(sub * 0.5), MIN_RUT_PRICE) : Math.max(sub, MIN_PRICE);
     return {
       subtotal: sub,
@@ -320,7 +314,8 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
     }
 
     setErrors({});
-    setStep(4);
+    setIsCalculating(true);
+    setLoadingPhase(0);
 
     // Send partial lead (button_click = "no")
     if (!hasFiredPartial) {
@@ -360,12 +355,24 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
         console.error("Failed submitting partial lead:", e);
       }
     }
+
+    // In-form animation cycling through benefits before revealing price
+    let phase = 0;
+    const interval = setInterval(() => {
+      phase = (phase + 1) % 3;
+      setLoadingPhase(phase);
+    }, 700);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      setIsCalculating(false);
+      setStep(4);
+    }, 2200);
   };
 
   // Step 4: Final Submit
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
-    const startTime = Date.now();
     try {
       const fullMessage = getFullBreakdownText();
       const payload: FormValues = {
@@ -415,26 +422,11 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
       }
 
       pushLeadToDataLayer(name, email, phone, city, fullMessage, priceInfo.price);
-
-      // Ensure minimum display time for smooth benefits loading animation
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, 2400 - elapsed);
-      if (remaining > 0) {
-        await new Promise(resolve => setTimeout(resolve, remaining));
-      }
-
       onSubmitSuccess('fonster', city);
       setStep(5);
     } catch (e) {
       console.error("Submission error:", e);
       pushLeadToDataLayer(name, email, phone, city, getFullBreakdownText(), priceInfo.price);
-
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, 2400 - elapsed);
-      if (remaining > 0) {
-        await new Promise(resolve => setTimeout(resolve, remaining));
-      }
-
       onSubmitSuccess('fonster', city);
       setStep(5);
     } finally {
@@ -453,6 +445,7 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
     setEmail('');
     setErrors({});
     setCalcError(false);
+    setIsCalculating(false);
     setStep(1);
   };
 
@@ -471,8 +464,9 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
       {step !== 5 && (
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-5 select-none" id="form-progress-bar">
           {stepperLabels.map((s, idx) => {
-            const isActive = step === s.num;
-            const isDone = step > s.num;
+            const currentNum = isCalculating ? 4 : step;
+            const isActive = currentNum === s.num;
+            const isDone = currentNum > s.num;
 
             return (
               <div key={s.num} className="flex items-center">
@@ -783,7 +777,7 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
       )}
 
       {/* STEP 3: KONTAKT */}
-      {step === 3 && (
+      {!isCalculating && step === 3 && (
         <div className="space-y-4 animate-step-in" id="stepperForm">
           <div className="text-center space-y-1 mb-2">
             <h2 className="text-lg md:text-xl font-extrabold text-gray-900 tracking-tight font-display">
@@ -908,8 +902,46 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
         </div>
       )}
 
+      {/* IN-CARD LOADING ANIMATION BEFORE STEP 4 (PRICE) */}
+      {isCalculating && (
+        <div className="py-6 sm:py-8 text-center space-y-4 animate-in fade-in duration-300" id="in-form-calculation-loader">
+          {/* Spinning circular loader in brand coral/red */}
+          <div className="relative w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full border-[3.5px] border-red-100 border-t-brand animate-spin"></div>
+          </div>
+
+          {/* Dynamic benefits title */}
+          <h3 className="text-2xl sm:text-[26px] font-extrabold text-[#2C3E50] font-display mb-1 tracking-tight transition-all duration-300">
+            {loadingSteps[loadingPhase].title}
+          </h3>
+
+          {/* Dynamic subtitle with city */}
+          <p className="text-xs sm:text-sm text-[#7F8C8D] font-normal max-w-sm mx-auto leading-relaxed transition-all duration-300">
+            {loadingSteps[loadingPhase].subtitle}
+          </p>
+
+          {/* Benefit badges matching screenshot */}
+          <div className="flex items-center justify-center gap-2 sm:gap-2.5 flex-wrap pt-2">
+            <span className="bg-[#FFF5F4] text-[#EC4C44] border border-[#FECACA]/70 text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-2xs">
+              Sedan 1998
+            </span>
+            <span className="bg-[#FFF5F4] text-[#EC4C44] border border-[#FECACA]/70 text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-2xs">
+              Kollektivavtal
+            </span>
+            <span className="bg-[#FFF5F4] text-[#EC4C44] border border-[#FECACA]/70 text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-2xs">
+              Försäkrade
+            </span>
+          </div>
+
+          {/* Trust strip */}
+          <div className="pt-3 border-t border-gray-100 mt-4">
+            {trustStrip}
+          </div>
+        </div>
+      )}
+
       {/* STEP 4: PRIS */}
-      {step === 4 && (
+      {!isCalculating && step === 4 && (
         <div className="space-y-4 animate-step-in" id="stepperForm">
           <div className="text-center space-y-1 mb-2">
             <h2 className="text-lg md:text-xl font-extrabold text-gray-900 tracking-tight font-display">
@@ -1023,47 +1055,6 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
             >
               Gör en ny beräkning
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Loading Animation Modal with Benefits Text */}
-      {isSubmitting && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-300"
-          id="submission-loading-overlay"
-        >
-          <div 
-            className="bg-[#FAFAF8] sm:bg-white rounded-[28px] max-w-lg w-full p-8 sm:p-12 text-center shadow-2xl relative border border-gray-100 animate-in zoom-in-95 duration-300"
-            id="submission-loading-card"
-          >
-            {/* Spinning circular loader in brand coral/red */}
-            <div className="relative w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-              <div className="w-14 h-14 rounded-full border-[3.5px] border-red-100 border-t-brand animate-spin"></div>
-            </div>
-
-            {/* Dynamic benefits title */}
-            <h3 className="text-2xl sm:text-[26px] font-extrabold text-[#2C3E50] font-display mb-2 tracking-tight transition-all duration-300">
-              {loadingSteps[loadingPhase].title}
-            </h3>
-
-            {/* Dynamic subtitle with city */}
-            <p className="text-sm text-[#7F8C8D] font-normal max-w-sm mx-auto mb-8 transition-all duration-300">
-              {loadingSteps[loadingPhase].subtitle}
-            </p>
-
-            {/* Benefit badges matching screenshot */}
-            <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
-              <span className="bg-[#FFF5F4] text-[#EC4C44] border border-[#FECACA]/70 text-xs font-semibold px-4 py-1.5 rounded-full shadow-2xs">
-                Sedan 1998
-              </span>
-              <span className="bg-[#FFF5F4] text-[#EC4C44] border border-[#FECACA]/70 text-xs font-semibold px-4 py-1.5 rounded-full shadow-2xs">
-                Kollektivavtal
-              </span>
-              <span className="bg-[#FFF5F4] text-[#EC4C44] border border-[#FECACA]/70 text-xs font-semibold px-4 py-1.5 rounded-full shadow-2xs">
-                Försäkrade
-              </span>
-            </div>
           </div>
         </div>
       )}
