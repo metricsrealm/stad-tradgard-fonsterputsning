@@ -58,22 +58,24 @@ async function startServer() {
       const fullComment = body.comment || body.message || "";
 
       const submitPayload = {
+        service_type: "Fönsterputsning",
+        form: "Fönsterputsning Landing Page",
         name: body.name || "",
         phone: body.phone || "",
         email: body.email || "",
-        square_meter: sqmNum,
         city: body.city || "",
         address: body.address || body.city || "",
+        square_meter: sqmNum,
         move_date: moveDate,
         message: fullComment,
         comment: fullComment,
         suggested_price: priceNum,
+        totalpris: priceNum ? `${priceNum} kr` : "",
         button_click: body.button_click || "no",
         is_button_click: body.is_button_click || body.button_click || "no",
         user_agent: clientUserAgent,
         user_ip: body.user_ip || clientIp,
         user_type: body.user_type || "Privatperson",
-        service_type: body.service_type || "Fönsterputsning",
         utm_source: body.utm_source || "",
         utm_medium: body.utm_medium || "",
         utm_campaign: body.utm_campaign || "",
@@ -83,26 +85,20 @@ async function startServer() {
         fbclid: body.fbclid || ""
       };
 
-      console.log("Submitting quote payload to http://stadochtradgard.se/dashboard/submit_quote.php:", submitPayload);
+      console.log("Submitting lead payload to https://stadochtradgard.se/dashboard/submit_form:", submitPayload);
 
-      const params = new URLSearchParams();
-      Object.entries(submitPayload).forEach(([key, val]) => {
-        params.append(key, String(val ?? ""));
-      });
-
-      const response = await fetch("http://stadochtradgard.se/dashboard/submit_quote.php", {
+      const response = await fetch("https://stadochtradgard.se/dashboard/submit_form", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
           "User-Agent": userAgent,
-          "Accept": "application/json, text/plain, */*",
-          "Accept-Language": "sv-SE,sv;q=0.9,en-US;q=0.8,en;q=0.7"
+          "Accept": "application/json, text/plain, */*"
         },
-        body: params.toString()
+        body: JSON.stringify(submitPayload)
       });
 
       const responseText = await response.text();
-      console.log("CRM submit_quote response status:", response.status, responseText);
+      console.log("CRM submit_form response status:", response.status, responseText);
 
       let parsedData: any = null;
       try {
@@ -114,7 +110,7 @@ async function startServer() {
       const leadId = parsedData?.id || parsedData?.customer_id || null;
 
       res.json({
-        success: response.ok || response.status === 200 || parsedData?.result === "success",
+        success: response.ok || response.status === 200 || parsedData?.result === "success" || parsedData?.status === "success",
         status: response.status,
         id: leadId,
         data: parsedData,
