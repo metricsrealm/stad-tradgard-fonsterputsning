@@ -35,6 +35,9 @@ export interface FormValues {
   sprojsFonster?: boolean;
   inglasadAltan?: boolean;
   oppningsbaraFonster?: boolean;
+  number_of_windows?: number;
+  number_of_sides?: number;
+  window_details?: Record<string, any>;
   message?: string;
   suggested_price?: number | string;
   suggestedPrice?: number | string;

@@ -23,11 +23,6 @@ async function startServer() {
 
       const body = req.body || {};
 
-      const parsedSqm = typeof body.square_meter === "number"
-        ? body.square_meter
-        : (parseInt(body.square_meter || body.squareMeter) || 0);
-      const sqmNum = parsedSqm > 0 ? parsedSqm : 70;
-
       let priceNum = 0;
       if (typeof body.suggested_price === "number") {
         priceNum = body.suggested_price;
@@ -36,22 +31,6 @@ async function startServer() {
       } else {
         const parsed = parseInt(String(body.suggested_price || body.suggestedPrice || "").replace(/[^0-9]/g, ""));
         priceNum = isNaN(parsed) ? 0 : parsed;
-      }
-
-      // Sanitize move_date to prevent 400 rejection from PHP server if date is in the past
-      let moveDate = body.move_date || body.cleaning_date || body.cleaningDate || "";
-      if (moveDate) {
-        try {
-          const parsedDate = new Date(moveDate);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          if (isNaN(parsedDate.getTime()) || parsedDate < today) {
-            console.log("Move date was in the past or invalid:", moveDate, "- setting to empty for CRM submission.");
-            moveDate = "";
-          }
-        } catch {
-          moveDate = "";
-        }
       }
 
       const clientUserAgent = body.user_agent || incomingUa || userAgent;
@@ -65,8 +44,9 @@ async function startServer() {
         email: body.email || "",
         city: body.city || "",
         address: body.address || body.city || "",
-        square_meter: sqmNum,
-        move_date: moveDate,
+        number_of_windows: body.number_of_windows !== undefined ? body.number_of_windows : 0,
+        number_of_sides: body.number_of_sides !== undefined ? body.number_of_sides : 2,
+        window_details: body.window_details || {},
         message: fullComment,
         comment: fullComment,
         suggested_price: priceNum,
@@ -138,18 +118,12 @@ async function startServer() {
       const clientUserAgent = body.user_agent || incomingUa || userAgent;
       const fullComment = body.comment || body.message || "";
 
-      const parsedSqm = typeof body.square_meter === "number"
-        ? body.square_meter
-        : (parseInt(body.square_meter || body.squareMeter) || 0);
-      const sqmNum = parsedSqm > 0 ? parsedSqm : 70;
-
       const updatePayload: Record<string, any> = {
         action: body.action || 4,
         customer_id: body.customer_id,
         name: body.name || "",
         email: body.email || "",
         phone: body.phone || "",
-        square_meter: sqmNum,
         city: body.city || "",
         comment: fullComment,
         message: fullComment,

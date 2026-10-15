@@ -71,22 +71,27 @@ const submitLeadToCRM = async (payload: FormValues) => {
 
   const searchParams = new URLSearchParams(window.location.search);
   const formattedPayload = {
+    service_type: 'Fönsterputsning',
+    form: 'Fönsterputsning Landing Page',
     name: payload.name || "",
     phone: payload.phone || "",
     email: payload.email || "",
-    square_meter: 70,
     city: payload.city || "",
     address: payload.address || payload.city || "",
-    move_date: "",
-    message: payload.message || payload.comment || "",
+    number_of_windows: payload.number_of_windows !== undefined ? payload.number_of_windows : 0,
+    number_of_sides: payload.number_of_sides !== undefined ? payload.number_of_sides : 2,
+    window_details: payload.window_details || {},
     comment: payload.comment || payload.message || "",
+    message: payload.message || payload.comment || "",
     suggested_price: typeof payload.suggested_price === 'number'
       ? payload.suggested_price
       : (parseInt(String(payload.suggested_price || payload.suggestedPrice || '').replace(/[^0-9]/g, '')) || 0),
+    totalpris: typeof payload.suggested_price === 'number'
+      ? `${payload.suggested_price} kr`
+      : (payload.suggestedPrice || ""),
     button_click: payload.button_click || "no",
     is_button_click: payload.is_button_click || payload.button_click || "no",
     user_type: payload.user_type || "Privatperson",
-    service_type: payload.service_type || "Fönsterputsning",
     user_agent: payload.user_agent || navigator.userAgent || "",
     utm_source: payload.utm_source || searchParams.get("utm_source") || "",
     utm_medium: payload.utm_medium || searchParams.get("utm_medium") || "",
@@ -332,6 +337,17 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
           email,
           city,
           address: city,
+          number_of_windows: totalItemsCount,
+          number_of_sides: counts.w4 > 0 ? 4 : 2,
+          window_details: {
+            standard2: counts.w2,
+            standard4: counts.w4,
+            door: counts.door,
+            ladder,
+            sprojs,
+            inglasad,
+            rut
+          },
           suggested_price: priceInfo.price,
           suggestedPrice: priceInfo.formatted,
           message: fullMessage,
@@ -386,6 +402,17 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
         email,
         city,
         address: city,
+        number_of_windows: totalItemsCount,
+        number_of_sides: counts.w4 > 0 ? 4 : 2,
+        window_details: {
+          standard2: counts.w2,
+          standard4: counts.w4,
+          door: counts.door,
+          ladder,
+          sprojs,
+          inglasad,
+          rut
+        },
         suggested_price: priceInfo.price,
         suggestedPrice: priceInfo.formatted,
         message: fullMessage,
@@ -693,7 +720,7 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
             >
               <div className="flex-1 pr-3">
                 <div className="text-xs sm:text-sm font-bold text-gray-900">Krävs stege?</div>
-                <div className="text-[11px] sm:text-xs text-gray-500">+200 kr om fönstren når högt</div>
+                <div className="text-[11px] sm:text-xs text-gray-500">Om fönstren når högt</div>
               </div>
               <div className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${ladder ? 'bg-brand' : 'bg-gray-300'}`}>
                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm absolute top-1 transition-all ${ladder ? 'left-6' : 'left-1'}`}></div>
@@ -980,7 +1007,7 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
             ))}
             <div className="flex justify-between items-center text-gray-700 border-t border-gray-100 pt-2">
               <span>Krävs stege</span>
-              <span className="font-semibold text-gray-900">{ladder ? 'Ja (+200 kr)' : 'Nej'}</span>
+              <span className="font-semibold text-gray-900">{ladder ? 'Ja' : 'Nej'}</span>
             </div>
             {sprojs && (
               <div className="flex justify-between items-center text-gray-700">
