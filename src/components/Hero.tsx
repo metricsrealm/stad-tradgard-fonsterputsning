@@ -114,7 +114,7 @@ export default function Hero({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-[500px] pt-1 animate-hero-checks" id="hero-feature-checks">
               {[
                 "100% Nöjdhetsgaranti",
-                "RUT-avdrag Direkt (Du Betalar 50%)",
+                "RUT-avdrag",
                 "Över 25 års erfarenhet",
                 "Klassisk teknik & Miljövänligt"
               ].map((tick, idx) => (

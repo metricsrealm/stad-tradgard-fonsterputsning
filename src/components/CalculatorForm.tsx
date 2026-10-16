@@ -151,12 +151,12 @@ const submitLeadToCRM = async (payload: FormValues) => {
 };
 
 const SERVICES = {
-  w2: { name: 'Standardfönster (2-sidig)', desc: 'Putsas in- och utsida', price: 100 },
-  w4: { name: 'Standardfönster (4-sidig)', desc: 'Kan delas, putsas på fyra sidor', price: 200 },
-  door: { name: 'Balkongdörr', desc: 'Helglas eller spröjsad', price: 120 }
+  w2: { name: 'Standardfönster (2-sidig)', desc: 'Putsas in- och utsida', price: 50 },
+  w4: { name: 'Standardfönster (4-sidig)', desc: 'Kan delas, putsas på fyra sidor', price: 100 },
+  door: { name: 'Balkongdörr', desc: 'Helglas eller spröjsad', price: 100 }
 };
 
-const LADDER_PRICE = 200;
+const LADDER_PRICE = 0; // Ingen extra avgift för stege
 const SPROJS_PRICE = 0; // Befintlig implementering: 0 kr (inräknat)
 const INGLASAD_PRICE = 0; // Befintlig implementering: 0 kr (inräknat)
 const MIN_PRICE = 700;
@@ -226,10 +226,15 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
 
   // Persistent Trust strip element displayed on every step before submission
   const trustStrip = (
-    <div className="flex items-center justify-center gap-3 text-[11px] font-semibold text-gray-500 pt-1 flex-wrap">
-      <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-500 stroke-[3]" /> Fast pris</span>
-      <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-500 stroke-[3]" /> Inga dolda avgifter</span>
-      <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-500 stroke-[3]" /> Pris efter RUT</span>
+    <div className="flex flex-col items-center gap-1 pt-1 select-none">
+      <div className="flex items-center justify-center gap-3 text-[11px] font-semibold text-gray-500 flex-wrap">
+        <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-500 stroke-[3]" /> Fast pris</span>
+        <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-500 stroke-[3]" /> Inga dolda avgifter</span>
+        <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-500 stroke-[3]" /> Pris efter RUT</span>
+      </div>
+      <div className="text-[10.5px] text-gray-400 font-medium">
+        (Utkörningsavgift tillkommer)
+      </div>
     </div>
   );
 
@@ -994,6 +999,9 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
             </div>
             <div className="text-xs text-gray-600 font-medium mt-1">
               {rut ? 'inkl. moms och RUT-avdrag' : 'inkl. moms'}
+            </div>
+            <div className="text-[11px] text-gray-500 font-medium mt-1.5 pt-1.5 border-t border-red-100">
+              * Utkörningsavgift tillkommer
             </div>
           </div>
 
