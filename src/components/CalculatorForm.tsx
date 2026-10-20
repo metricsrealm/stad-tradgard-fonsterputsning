@@ -26,8 +26,7 @@ const pushLeadToDataLayer = (
   emailVal: string,
   phoneVal: string,
   cityVal: string,
-  serviceDetail: string,
-  priceVal: number
+  serviceDetail: string
 ) => {
   try {
     const dataLayer = (window as any).dataLayer || [];
@@ -49,19 +48,36 @@ const pushLeadToDataLayer = (
       },
       lead_details: {
         service_type: 'Fönsterputsning',
-        service_items: serviceDetail,
-        total_price: priceVal,
-        city: cityVal || ''
+        service_items: serviceDetail
       }
     });
     console.log("Tracked 'generate_lead' event in dataLayer:", {
       email: emailVal,
       phone: phoneVal,
       service_type: 'Fönsterputsning',
-      price: priceVal
+      service_items: serviceDetail
     });
   } catch (err) {
     console.error("Error pushing lead event to dataLayer:", err);
+  }
+};
+
+// Push interested_for_booking event to GTM dataLayer on [Skicka förfrågan]
+const pushBookingIntentToDataLayer = (cityVal: string) => {
+  try {
+    const dataLayer = (window as any).dataLayer || [];
+    dataLayer.push({
+      event: "interested_for_booking",
+      service: "fonsterputsning",
+      city: cityVal || "",
+      timestamp: new Date().toISOString()
+    });
+    console.log("Tracked 'interested_for_booking' event in dataLayer:", {
+      service: "fonsterputsning",
+      city: cityVal || ""
+    });
+  } catch (err) {
+    console.error("Error pushing booking event to dataLayer:", err);
   }
 };
 
@@ -332,6 +348,9 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
     setIsCalculating(true);
     setLoadingPhase(0);
 
+    // Trigger generate_lead event to dataLayer on Step 3 [Visa mitt pris →]
+    pushLeadToDataLayer(name, email, phone, city, getFullBreakdownText());
+
     // Send partial lead (button_click = "no")
     if (!hasFiredPartial) {
       try {
@@ -458,12 +477,14 @@ export default function CalculatorForm({ initialService, initialCity, onSubmitSu
         }).catch(err => console.error("Update lead error:", err));
       }
 
-      pushLeadToDataLayer(name, email, phone, city, fullMessage, priceInfo.price);
+      // Fire interested_for_booking event on [Skicka förfrågan]
+      pushBookingIntentToDataLayer(city);
+
       onSubmitSuccess('fonster', city);
       setStep(5);
     } catch (e) {
       console.error("Submission error:", e);
-      pushLeadToDataLayer(name, email, phone, city, getFullBreakdownText(), priceInfo.price);
+      pushBookingIntentToDataLayer(city);
       onSubmitSuccess('fonster', city);
       setStep(5);
     } finally {
