@@ -9,24 +9,9 @@ interface TackProps {
 
 export default function Tack({ serviceType, cityName, onGoBack }: TackProps) {
   useEffect(() => {
-    // Inject the final generate_lead event to the dataLayer on mounting the /tack view
-    const win = window as any;
-    win.dataLayer = win.dataLayer || [];
-    win.dataLayer.push({
-      event: 'generate_lead',
-      service: serviceType || 'Fönsterputsning',
-      city: cityName || 'Borås',
-      timestamp: new Date().toISOString()
-    });
-
-    console.log("dataLayer.push executed on /tack view: generate_lead event logged.", {
-      service: serviceType,
-      city: cityName
-    });
-
     // Scroll to top automatically
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [serviceType, cityName]);
+  }, []);
 
   const readableService = {
     fonster: "Fönsterputsning",
