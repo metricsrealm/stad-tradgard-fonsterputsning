@@ -169,7 +169,7 @@ const submitLeadToCRM = async (payload: FormValues) => {
 const SERVICES = {
   w2: { name: 'Standardfönster (2-sidig)', desc: 'Putsas in- och utsida', price: 50 },
   w4: { name: 'Standardfönster (4-sidig)', desc: 'Kan delas, putsas på fyra sidor', price: 100 },
-  door: { name: 'Balkongdörr', desc: 'Helglas eller spröjsad', price: 100 }
+  door: { name: 'Balkongdörr', desc: 'Helglas eller spröjsad', price: 200 }
 };
 
 const LADDER_PRICE = 0; // Ingen extra avgift för stege
